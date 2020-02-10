@@ -1,0 +1,29 @@
+steps:
+  # install dependencies
+  - name: 'node:10.15.0'
+    entrypoint: 'npm'
+    args: ['ci']
+  # build cloud function
+  - name: 'node:10.15.0'
+    entrypoint: 'npx'
+    args: ['ng', 'build', '--project=gcf-provider-pdf', '-c=production']
+  # Move static file
+  - name: 'ubuntu'
+    dir: 'projects/gcf-provider-pdf'
+    args: ['cp', 'package.json', '../../dist/gcf-provider']
+  # Rename main file
+  - name: 'ubuntu'
+    dir: 'dist/gcf-provider-pdf'
+    args: ['mv', 'main.js', 'index.js']
+  # deploy cloud function
+  - name: 'gcr.io/cloud-builders/gcloud'
+    dir: 'dist/gcf-provider-pdf'
+    args:
+      [
+        'functions',
+        'deploy',
+        'gcf-provider-pdf',
+        '--trigger-http',
+        '--entry-point=gcfProviderPdf',
+        '--runtime=nodejs10',
+      ]
